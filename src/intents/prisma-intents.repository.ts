@@ -73,6 +73,23 @@ export class PrismaIntentsRepository implements IIntentsRepository {
     }
   }
 
+  async amendIfOpen(
+    id: string,
+    patch: Pick<Intent, "minDstAmount" | "deadline">,
+    now = Math.floor(Date.now() / 1000),
+  ): Promise<Intent | null> {
+    if (patch.deadline <= now) return null;
+
+    const result = await this.prisma.intent.updateMany({
+      where: { intentId: id, state: PrismaIntentState.open, deadline: { gt: now } },
+      data: { minDstAmount: patch.minDstAmount, deadline: patch.deadline },
+    });
+    if (result.count === 0) return null;
+
+    const row = await this.prisma.intent.findUnique({ where: { intentId: id } });
+    return row ? this.fromRow(row) : null;
+  }
+
   async delete(id: string): Promise<boolean> {
     try {
       await this.prisma.intent.delete({ where: { intentId: id } });

@@ -173,6 +173,24 @@ describe("IntentsService", () => {
     expect(await service.update("does-not-exist", { state: "cancelled" })).toBeNull();
   });
 
+  it("amends an open intent while preserving its id and creation time", async () => {
+    const [open] = await service.getByState("open");
+    const nextDeadline = open.deadline + 600;
+
+    const amended = await service.amendIfOpen(open.intentId, {
+      minDstAmount: "980000",
+      deadline: nextDeadline,
+    });
+
+    expect(amended).toMatchObject({
+      intentId: open.intentId,
+      createdAt: open.createdAt,
+      state: "open",
+      minDstAmount: "980000",
+      deadline: nextDeadline,
+    });
+  });
+
   it("getByUser is case-insensitive", async () => {
     const [existing] = await service.getAll();
     const found = await service.getByUser(existing.user.toLowerCase());

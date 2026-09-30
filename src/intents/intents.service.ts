@@ -548,6 +548,15 @@ export class IntentsService {
     return this.repo.update(id, patch);
   }
 
+  /** Amend an open intent without changing its ID or creation history. */
+  async amendIfOpen(
+    id: string,
+    patch: Pick<Intent, "minDstAmount" | "deadline">,
+    now = Math.floor(Date.now() / 1000),
+  ): Promise<Intent | null> {
+    return this.repo.amendIfOpen(id, patch, now);
+  }
+
   /**
    * Atomically accept an intent only if it is currently "open" with a future
    * deadline (issue #473). Delegates to the repository so both in-memory and

@@ -38,6 +38,7 @@ import { CHAIN_DEADLINE_DEFAULTS, DEFAULT_DEADLINE_SECONDS } from "../config/con
 import { AcceptIntentDto } from "./dto/accept-intent.dto";
 import { FillIntentDto } from "./dto/fill-intent.dto";
 import { CancelIntentDto } from "./dto/cancel-intent.dto";
+import { AmendIntentDto } from "./dto/amend-intent.dto";
 import { QuoteRequestDto } from "./dto/quote-request.dto";
 import { QuoteResponseDto } from "./dto/quote-response.dto";
 import { ListIntentsDto } from "./dto/list-intents.dto";
@@ -52,6 +53,7 @@ import {
   verifyStellarSignature,
   buildAcceptMessage,
   buildCancelMessage,
+  buildAmendMessage,
   buildFillMessage,
 } from "../common/stellar-signature";
 import {
@@ -589,6 +591,44 @@ export class IntentsController {
     this.intentsService.appendAuditEntry(id, "cancelled", dto.user, "user cancelled");
 
     this.intentsGateway.broadcast({ type: "intent_cancelled", intentId: id });
+    return updated;
+  }
+
+  @Post(":id/amend")
+  @ApiNotFoundResponse({ description: "Intent not found" })
+  @ApiForbiddenResponse({ description: "Unauthorized" })
+  @ApiConflictResponse({ description: "Intent is not open or its deadline has passed" })
+  async amend(@Param("id") id: string, @Body() dto: AmendIntentDto) {
+    const intent = await this.intentsService.get(id);
+    if (!intent) throw new NotFoundException("Intent not found");
+    if (intent.user.toLowerCase() !== dto.user.toLowerCase()) {
+      throw new ForbiddenException("Unauthorized");
+    }
+    if (intent.state !== "open") {
+      throw new ConflictException(`Cannot amend intent in state: ${intent.state}`);
+    }
+
+    verifyStellarSignature(
+      dto.user,
+      buildAmendMessage(id, dto.user, dto.minDstAmount, dto.deadline),
+      dto.signature,
+    );
+
+    const updated = await this.intentsService.amendIfOpen(id, {
+      minDstAmount: dto.minDstAmount,
+      deadline: dto.deadline,
+    });
+    if (!updated) {
+      const current = await this.intentsService.get(id);
+      throw new ConflictException(`Cannot amend intent in state: ${current?.state ?? "unknown"}`);
+    }
+
+    this.intentsService.appendAuditEntry(id, "open", dto.user, "user amended", {
+      previousMinDstAmount: intent.minDstAmount,
+      minDstAmount: updated.minDstAmount,
+      previousDeadline: intent.deadline,
+      deadline: updated.deadline,
+    });
     return updated;
   }
 
