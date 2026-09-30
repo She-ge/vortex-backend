@@ -119,7 +119,6 @@ model Intent {
   /// Realized protocol fee charged on this fill (destination-token base units).
   feeAmount      String?     @map("fee_amount")
   /// On-chain transaction hash of the Stellar fill transaction.
-  txHash         String?     @map("tx_hash")
   /// USD value of `srcAmount` at creation time, computed from the resolved
   /// source-token price.  Stored as a numeric so range filters
   /// (`minAmountUsd` / `maxAmountUsd`) and USD sorting are indexable.
@@ -233,11 +232,24 @@ model Token {
   priceUsd  Float?         @map("price_usd")
   /// Whether this is a destination-side Stellar token.
   isStellar Boolean        @default(false) @map("is_stellar")
+  priceHistory PriceHistory[]
 
   @@unique([address, chain])
   @@index([chain])
   @@index([symbol])
   @@map("tokens")
+}
+
+/// Append-only USD price samples written by the price-feed worker.
+model PriceHistory {
+  id         BigInt   @id @default(autoincrement()) @map("id")
+  tokenId    String   @map("token_id")
+  priceUsd   Float    @map("price_usd")
+  recordedAt DateTime @default(now()) @map("recorded_at") @db.Timestamptz
+  token      Token    @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+
+  @@index([tokenId, recordedAt(sort: Desc)])
+  @@map("price_history")
 }
 
 // ─── KillSwitch (issue #477) ─────────────────────────────────────────────────

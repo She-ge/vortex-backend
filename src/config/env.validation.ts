@@ -101,6 +101,13 @@ export const envValidationSchema = Joi.object({
   // to a live database.  Intended for production / staging.
   INTENTS_PERSISTENCE: Joi.string().valid("memory", "prisma").default("memory"),
   SOLVERS_PERSISTENCE: Joi.string().valid("memory", "prisma").default("memory"),
+  TOKENS_PERSISTENCE: Joi.string().valid("memory", "prisma").default("memory"),
+
+  // Map token symbols to CoinGecko IDs for assets not covered by defaults.
+  PRICE_FEED_COIN_IDS: Joi.string().default("{}"),
+  PRICE_FEED_API_KEY: Joi.string().allow("").default(""),
+  PRICE_FEED_REFRESH_INTERVAL_MS: Joi.number().integer().min(1000).default(60000),
+  PRICE_FEED_CIRCUIT_BREAKER_THRESHOLD_PERCENT: Joi.number().positive().max(10000).default(50),
 
   // ── Intent retention (in-memory store hygiene) ─────────────────────────────
   // How long terminal intents are kept in the in-memory adapter, and how often

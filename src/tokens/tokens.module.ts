@@ -5,6 +5,8 @@ import { TokensService } from "./tokens.service";
 import { TOKENS_REPOSITORY } from "./tokens.repository";
 import { InMemoryTokensRepository } from "./in-memory-tokens.repository";
 import { PrismaTokensRepository } from "./prisma-tokens.repository";
+import { PriceFeedWorker } from "./price-feed.worker";
+import { CoinGeckoPriceFeedProvider, PRICE_FEED_PROVIDER } from "./price-feed.provider";
 
 @Module({
   controllers: [TokensController],
@@ -23,6 +25,9 @@ import { PrismaTokensRepository } from "./prisma-tokens.repository";
       },
     },
     TokensService,
+    PriceFeedWorker,
+    CoinGeckoPriceFeedProvider,
+    { provide: PRICE_FEED_PROVIDER, useExisting: CoinGeckoPriceFeedProvider },
   ],
   exports: [TokensService],
 })
