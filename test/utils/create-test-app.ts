@@ -3,6 +3,7 @@ import { Test } from "@nestjs/testing";
 import { ConfigService } from "@nestjs/config";
 import { WsAdapter } from "@nestjs/platform-ws";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { json } from "express";
 import { json, Request, Response, NextFunction } from "express";
 import { AppModule } from "../../src/app.module";
 import { AppConfig } from "../../src/config/configuration";

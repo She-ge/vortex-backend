@@ -46,7 +46,9 @@ export function buildCancelMessage(intentId: string): string {
   return `cancel:${intentId}`;
 }
 
-/** Build the canonical message that an intent owner must sign to amend it. */
+/**
+ * Build the canonical message that an intent owner must sign to amend it.
+ */
 export function buildAmendMessage(
   intentId: string,
   user: string,

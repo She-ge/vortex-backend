@@ -158,3 +158,5 @@ describe("InMemoryIntentsRepository", () => {
     expect(repo.amendIfOpen("missing", { minDstAmount: "1", deadline: now + 200 }, now)).toBeNull();
   });
 });
+  });
+});
